@@ -7,6 +7,14 @@ output: pdf_document
 
 ```{r}
 library(readr)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(cluster)
+library(factoextra)
+library(tidyverse)
+library(skimr)
+library(corrplot)
 ```
 
 ```{r}
@@ -14,6 +22,10 @@ data<-read_csv("CC GENERAL.csv")
 ```
 
 ```{r}
+<<<<<<< HEAD
 head(data)
+=======
+complete.cases(data)
+>>>>>>> decaebfb2a19573eedac95c71fee700945cf6587
 ```
 
