@@ -17,6 +17,7 @@ library(factoextra)
 library(tidyverse)
 library(skimr)
 library(corrplot)
+library(plotly)
 ```
 
 ```{r}
@@ -46,12 +47,76 @@ corrplot(cc_c,
          method="color",
          order="hclust")
 ```
+```{r}
+cc_z = scale(cc)
+#Manhattan distance: 
+cc_dm = dist(cc_z, method="manhattan")
+#Complete linkage: 
+clust = hclust(cc_dm)
+table(cutree(clust, k=7))
+sapply(7:13, function(x) table(cutree(clust, k=x)))
+```
 
 ```{r}
 ##Fit the PCA model
 cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
+```
+```{r fig.width=6, fig.height=6}
+fviz_pca_var(cc_pca, col.var="contrib", 
+             gradient.cols=c("#00AFBB","#E7B800","#FC4E07"),
+             repel=TRUE)
+```
+```{r}
+fviz_nbclust(scale(cc), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 13(7 is also high)
+fviz_nbclust(scale(cc), kmeans, method = "wss", k.max=15)
+## choose cluster is 2, 4, 7, 9
+```
+
+
+```{r}
 ##Choose Dimensions
 get_eigenvalue(cc_pca)
 ##Based on the eigenvalue, we want to choose eigenvalue>1, so we could choose Dimension with 5; however, since we want cumulative variance too small, we choose eigenvalue>0.7, so we choose Dimension with 8 which also has 85% of cumulative variance. 
 ```
+
+```{r}
+k=kmeans(scale(cc), 7, 25, 25)
+fviz_cluster(k, scale(cc))
+```
+
+```{r}
+table(k$cluster)
+```
+```{r}
+k2=kmeans(scale(cc), 9, 25, 25)
+fviz_cluster(k2, scale(cc))
+```
+```{r}
+table(k2$cluster)
+```
+```{r}
+k3=kmeans(scale(cc), 13, 25, 25)
+fviz_cluster(k3, scale(cc))
+```
+```{r}
+table(k3$cluster)
+```
+
+```{r}
+## apply the features -- could use new data, or the original as I do below
+c_pcs=predict(cc_pca, newdata=cc)
+class(c_pcs)
+c_pcs=as.data.frame(c_pcs)
+head(c_pcs)
+```
+```{r}
+c_pc=c_pcs[, 1:8]
+head(c_pc)
+```
+```{r}
+plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers")
+```
+
+
 
