@@ -1,6 +1,6 @@
 ---
 title: "820 Team Project"
-author: "Shangkun Zuo"
+author: "team 6"
 date: "11/19/2019"
 output: pdf_document
 ---
