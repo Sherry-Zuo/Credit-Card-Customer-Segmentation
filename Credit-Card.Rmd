@@ -1,0 +1,15 @@
+---
+title: "820 Team Project"
+author: "Shangkun Zuo"
+date: "11/19/2019"
+output: pdf_document
+---
+
+```{r}
+library(readr)
+```
+
+```{r}
+data<-read_csv("CC GENERAL.csv")
+```
+
