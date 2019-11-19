@@ -35,5 +35,5 @@ colmean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
 cc <- replace(cc, TRUE, lapply(cc, colmean))
 glimpse(cc)
 skim(cc)
+##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
 ```
-There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
