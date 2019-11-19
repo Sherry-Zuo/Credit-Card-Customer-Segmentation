@@ -70,7 +70,55 @@ ggplot(cc, aes(x = purchases_installments_frequency, y = purchases, color = purc
   geom_point()+
   theme(panel.background = element_rect(fill="white"))
 ```
+# balance: 欠款
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$balance)
+boxplot(cc$balance, horizontal = T)
+```
 
+# balance freq: both withdraw and saving 用户活动频率（消费，还款）
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$balance_frequency)
+boxplot(cc$balance_frequency, horizontal = T)
+```
+
+# purchases: 总消费金额
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$purchases)
+boxplot(cc$purchases, horizontal = T)
+```
+# purchase freq: 消费频率
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$purchases_frequency)
+boxplot(cc$purchases_frequency, horizontal = T)
+```
+
+# oneoff purchase: maximum amount 最高消费额度
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$oneoff_purchases)
+boxplot(cc$oneoff_purchases, horizontal = T)
+```
+
+# oneoff purchase frequency: 最高消费更新频率
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$oneoff_purchases_frequency)
+boxplot(cc$oneoff_purchases_frequency, horizontal = T)
+```
+
+# oneoff purchase: maximum amount 
+```{r}
+par(mfrow = c(2,1))
+hist(x=cc$installments_purchases)
+boxplot(cc$installments_purchases, horizontal = T)
+```
+
+## Hclust
 ```{r}
 cc_z = scale(cc)
 #Manhattan distance: 
@@ -189,6 +237,28 @@ ggplot(cc, aes(x=cluster, y=purchases, fill=factor(cluster)))+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,4000)
 ```
+```{r}
+cc$cluster<-k5$cluster
+ggplot(cc, aes(x=cluster, y=purchases_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,1)
+```
 
+```{r}
+cc$cluster<-k5$cluster
+ggplot(cc, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,10000)
+```
+
+```{r}
+cc$cluster<-k5$cluster
+ggplot(cc, aes(x=cluster, y=balance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,7000)
+```
 
 
