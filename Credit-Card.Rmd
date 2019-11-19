@@ -37,3 +37,22 @@ glimpse(cc)
 skim(cc)
 ##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
 ```
+```{r fig.width=12, fig.height=12}
+cc_c<-cor(cc)
+corrplot(cc_c,
+         type="upper",
+         diag=F,
+         method="color",
+         order="hclust")
+```
+
+```{r}
+##Fit the PCA model
+cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
+
+fviz_nbclust(scale(cc), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 13
+fviz_nbclust(scale(cc), kmeans, method = "wss", k.max=15)
+## choose cluster is
+```
+
