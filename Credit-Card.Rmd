@@ -22,10 +22,8 @@ data<-read_csv("CC GENERAL.csv")
 ```
 
 ```{r}
-<<<<<<< HEAD
-head(data)
-=======
-complete.cases(data)
->>>>>>> decaebfb2a19573eedac95c71fee700945cf6587
+colnames(data)<-tolower(colnames(data))
+colnames(data)
 ```
+
 
