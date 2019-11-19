@@ -48,6 +48,7 @@ corrplot(cc_c,
          diag=F,
          method="color",
          order="hclust")
+##Based on the correlation plot colors, we think there are more than 4 clusters in our dataset. 
 ```
 ```{r}
 ##Explore data
@@ -172,9 +173,10 @@ fviz_cluster(k7, scale(c_pc))
 ```{r}
 table(k7$cluster)
 ```
-Since we don't want the size of cluster too small or larger, and try to average the size of clusters, so we think the best k is 5 for PCA model. 
+Since we don't want the size of the cluster too small or larger and try to average the size of clusters, so we think the best k is 5 for the PCA model.
 
 ```{r}
+##Add clustering back to the original dataset
 c_pc$cluster<-k5$cluster
 ```
 ```{r}
