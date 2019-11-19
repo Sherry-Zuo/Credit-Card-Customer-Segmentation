@@ -40,6 +40,9 @@ glimpse(cc)
 skim(cc)
 ##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
 ```
+```{r}
+summary(lm(credit_limit~. , cc))
+```
 
 ```{r fig.width=12, fig.height=12}
 cc_c<-cor(cc)
@@ -48,8 +51,8 @@ corrplot(cc_c,
          diag=F,
          method="color",
          order="hclust")
-##Based on the correlation plot colors, we think there are more than 4 clusters in our dataset. 
 ```
+Based on the correlation plot colors, we think there are more than 4 clusters in our dataset.
 ```{r}
 ##Explore data
 ggplot(cc,aes(x=purchases_frequency)) +
@@ -70,56 +73,52 @@ ggplot(cc, aes(x = purchases_installments_frequency, y = purchases, color = purc
   geom_point()+
   theme(panel.background = element_rect(fill="white"))
 ```
-# balance: 欠款
+ 
 ```{r}
+##balance
 par(mfrow = c(2,1))
 hist(x=cc$balance)
 boxplot(cc$balance, horizontal = T)
 ```
-
-# balance freq: both withdraw and saving 用户活动频率（消费，还款）
 ```{r}
+##balance freq: both withdraw and saving
 par(mfrow = c(2,1))
 hist(x=cc$balance_frequency)
 boxplot(cc$balance_frequency, horizontal = T)
 ```
-
-# purchases: 总消费金额
 ```{r}
+##purchases
 par(mfrow = c(2,1))
 hist(x=cc$purchases)
 boxplot(cc$purchases, horizontal = T)
 ```
-# purchase freq: 消费频率
 ```{r}
+##purchase freq
 par(mfrow = c(2,1))
 hist(x=cc$purchases_frequency)
 boxplot(cc$purchases_frequency, horizontal = T)
 ```
-
-# oneoff purchase: maximum amount 最高消费额度
 ```{r}
+##oneoff purchase: maximum purchase amount
 par(mfrow = c(2,1))
 hist(x=cc$oneoff_purchases)
 boxplot(cc$oneoff_purchases, horizontal = T)
 ```
-
-# oneoff purchase frequency: 最高消费更新频率
 ```{r}
+##oneoff purchase frequency: maximum purchase refresh freq
 par(mfrow = c(2,1))
 hist(x=cc$oneoff_purchases_frequency)
 boxplot(cc$oneoff_purchases_frequency, horizontal = T)
 ```
-
-# oneoff purchase: maximum amount 
 ```{r}
+##oneoff purchase: maximum installment amount
 par(mfrow = c(2,1))
 hist(x=cc$installments_purchases)
 boxplot(cc$installments_purchases, horizontal = T)
 ```
 
-## Hclust
 ```{r}
+## Hclust
 cc_z = scale(cc)
 #Manhattan distance: 
 cc_dm = dist(cc_z, method="manhattan")
@@ -224,6 +223,7 @@ table(k7$cluster)
 Since we don't want the size of the cluster too small or larger and try to average the size of clusters, so we think the best k is 5 for the PCA model.
 
 ```{r}
+##Results business related
 ##Add clustering back to the original dataset
 c_pc$cluster<-k5$cluster
 ```
@@ -244,7 +244,6 @@ ggplot(cc, aes(x=cluster, y=purchases_frequency, fill=factor(cluster)))+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,1)
 ```
-
 ```{r}
 cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
@@ -252,7 +251,6 @@ ggplot(cc, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,10000)
 ```
-
 ```{r}
 cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=balance, fill=factor(cluster)))+
