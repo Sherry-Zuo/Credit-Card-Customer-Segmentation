@@ -1,0 +1,32 @@
+---
+title: "820 Team Project"
+author: "team 6"
+date: "11/19/2019"
+output: pdf_document
+---
+
+```{r}
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(cluster)
+library(factoextra)
+library(tidyverse)
+library(skimr)
+library(corrplot)
+```
+
+```{r}
+data<-read_csv("CC GENERAL.csv")
+```
+
+```{r}
+colnames(data)<-tolower(colnames(data))
+colnames(data)
+```
+
+```{r}
+skim(data)
+```
+
