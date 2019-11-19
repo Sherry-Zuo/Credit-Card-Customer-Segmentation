@@ -40,16 +40,6 @@ glimpse(cc)
 skim(cc)
 ##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
 ```
-```{r}
-##Explore data
-ggplot(cc,aes(x=purchases_frequency)) +
-  geom_histogram()
-```
-Based on this histigram, this graph shows us that the purchasing polarization. x-axis indicates that how frequently the purchases are being made, 1 = very frequently, and 0 = not very frequently. Most of transcations is concetred on the either not very frequently or very frequently group.
-```{r}
-ggplot(cc, aes(x = balance_frequency, y = balance, color = factor(tenure)))+
-  geom_point(alpha = 0.2)
-```
 
 ```{r fig.width=12, fig.height=12}
 cc_c<-cor(cc)
@@ -60,11 +50,24 @@ corrplot(cc_c,
          order="hclust")
 ```
 ```{r}
+##Explore data
+ggplot(cc,aes(x=purchases_frequency)) +
+  geom_histogram()+
+  theme(panel.background = element_rect(fill="white"))
+```
+Based on this histigram, this graph shows us that the purchasing polarization. x-axis indicates that how frequently the purchases are being made, 1 = very frequently, and 0 = not very frequently. Most of transcations is concetred on the either not very frequently or very frequently group.
+```{r}
+ggplot(cc, aes(x = balance_frequency, y = balance, color = factor(tenure)))+
+  geom_point(alpha = 0.2)+
+  theme(panel.background = element_rect(fill="white"))
+```
+```{r}
 ##cash_advance_frequency with cash_advance_trx
 ##purchases with purchases_installments_frequency
 ##purchases_frequency with purchases_installments_frequency
 ggplot(cc, aes(x = purchases_installments_frequency, y = purchases, color = purchases_frequency))+
-  geom_line()
+  geom_point()+
+  theme(panel.background = element_rect(fill="white"))
 ```
 
 ```{r}
@@ -181,7 +184,8 @@ plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers",col
 cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=purchases, fill=factor(cluster)))+
   geom_boxplot()+
-  ylim(0,3000)
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,4000)
 ```
 
 
