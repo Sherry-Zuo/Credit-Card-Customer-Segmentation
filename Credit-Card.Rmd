@@ -26,4 +26,7 @@ colnames(data)<-tolower(colnames(data))
 colnames(data)
 ```
 
+```{r}
+skim(data)
+```
 
