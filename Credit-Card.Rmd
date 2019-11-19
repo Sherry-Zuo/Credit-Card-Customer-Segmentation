@@ -1,7 +1,8 @@
 ---
-title: "820 Team Project"
-author: "team 6"
-date: "11/19/2019"
+title: "Credit Card Customer Segmentation"
+subtitle: BA820 - Fall 2019
+author: "team 7"
+date: "11/20/2019"
 output: pdf_document
 ---
 
@@ -176,5 +177,12 @@ c_pc$cluster<-k5$cluster
 ```{r}
 plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers",color =factor(c_pc$cluster))
 ```
+```{r}
+cc$cluster<-k5$cluster
+ggplot(cc, aes(x=cluster, y=purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  ylim(0,3000)
+```
+
 
 
