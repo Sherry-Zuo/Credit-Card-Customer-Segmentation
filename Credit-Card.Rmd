@@ -50,7 +50,7 @@ corrplot(cc_c,
 ```{r}
 ##Fit the PCA model
 cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
-
+##Choose Dimensions
 get_eigenvalue(cc_pca)
 ##Based on the eigenvalue, we want to choose eigenvalue>1, so we could choose Dimension with 5; however, since we want cumulative variance too small, we choose eigenvalue>0.7, so we choose Dimension with 8 which also has 85% of cumulative variance. 
 ```
