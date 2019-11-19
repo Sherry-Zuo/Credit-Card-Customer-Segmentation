@@ -5,6 +5,7 @@ date: "11/19/2019"
 output: pdf_document
 ---
 
+**Team 7 Members:** Kunpeng Huang, Yoki Liu, Lyufan Pan, Yunlei Zhou, Jiayuan Zou, Sherry Zuo
 ```{r}
 ## load the packages
 library(readr)
@@ -50,9 +51,7 @@ corrplot(cc_c,
 ##Fit the PCA model
 cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
 
-fviz_nbclust(scale(cc), kmeans, method = "silhouette", k.max=15)
-## choose cluster is 13
-fviz_nbclust(scale(cc), kmeans, method = "wss", k.max=15)
-## choose cluster is
+get_eigenvalue(cc_pca)
+##Based on the eigenvalue, we want to choose eigenvalue>1, so we could choose Dimension with 5; however, since we want cumulative variance too small, we choose eigenvalue>0.7, so we choose Dimension with 8 which also has 85% of cumulative variance. 
 ```
 
