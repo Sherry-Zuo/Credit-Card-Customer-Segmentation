@@ -6,6 +6,7 @@ output: pdf_document
 ---
 
 ```{r}
+## load the packages
 library(readr)
 library(ggplot2)
 library(dplyr)
@@ -18,6 +19,7 @@ library(corrplot)
 ```
 
 ```{r}
+## load the dataset
 data<-read_csv("CC GENERAL.csv")
 ```
 
@@ -27,6 +29,11 @@ colnames(data)
 ```
 
 ```{r}
-skim(data)
+##Data Cleaning
+cc<-data%>%select(-cust_id)
+colmean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+cc <- replace(cc, TRUE, lapply(cc, colmean))
+glimpse(cc)
+skim(cc)
 ```
-
+There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
