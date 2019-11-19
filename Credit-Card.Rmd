@@ -39,6 +39,17 @@ glimpse(cc)
 skim(cc)
 ##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
 ```
+```{r}
+##Explore data
+ggplot(cc,aes(x=purchases_frequency)) +
+  geom_histogram()
+```
+Based on this histigram, this graph shows us that the purchasing polarization. x-axis indicates that how frequently the purchases are being made, 1 = very frequently, and 0 = not very frequently. Most of transcations is concetred on the either not very frequently or very frequently group.
+```{r}
+ggplot(cc, aes(x = balance_frequency, y = balance, color = factor(tenure)))+
+  geom_point(alpha = 0.2)
+```
+
 ```{r fig.width=12, fig.height=12}
 cc_c<-cor(cc)
 corrplot(cc_c,
@@ -47,6 +58,14 @@ corrplot(cc_c,
          method="color",
          order="hclust")
 ```
+```{r}
+##cash_advance_frequency with cash_advance_trx
+##purchases with purchases_installments_frequency
+##purchases_frequency with purchases_installments_frequency
+ggplot(cc, aes(x = purchases_installments_frequency, y = purchases, color = purchases_frequency))+
+  geom_line()
+```
+
 ```{r}
 cc_z = scale(cc)
 #Manhattan distance: 
@@ -114,9 +133,7 @@ head(c_pcs)
 c_pc=c_pcs[, 1:8]
 head(c_pc)
 ```
-```{r}
-plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers")
-```
+
 ```{r}
 fviz_nbclust(scale(c_pc), kmeans, method = "silhouette", k.max=15)
 ## choose cluster is 2
@@ -153,5 +170,11 @@ table(k7$cluster)
 ```
 Since we don't want the size of cluster too small or larger, and try to average the size of clusters, so we think the best k is 5 for PCA model. 
 
+```{r}
+c_pc$cluster<-k5$cluster
+```
+```{r}
+plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers",color =factor(c_pc$cluster))
+```
 
 
