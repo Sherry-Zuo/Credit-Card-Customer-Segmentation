@@ -13,3 +13,7 @@ library(readr)
 data<-read_csv("CC GENERAL.csv")
 ```
 
+```{r}
+head(data)
+```
+
