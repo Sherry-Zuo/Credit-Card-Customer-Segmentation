@@ -102,7 +102,7 @@ fviz_cluster(k3, scale(cc))
 ```{r}
 table(k3$cluster)
 ```
-
+In the original model, we think k=9 is the best since each cluster has similar size. 
 ```{r}
 ## apply the features -- could use new data, or the original as I do below
 c_pcs=predict(cc_pca, newdata=cc)
@@ -117,6 +117,41 @@ head(c_pc)
 ```{r}
 plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers")
 ```
+```{r}
+fviz_nbclust(scale(c_pc), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 2
+fviz_nbclust(scale(c_pc), kmeans, method = "wss", k.max=15)
+## choose cluster is 2, 5, 7, 9
+```
+```{r}
+k4=kmeans(scale(c_pc), 2, 25, 25)
+fviz_cluster(k4, scale(c_pc))
+```
+```{r}
+table(k4$cluster)
+```
+```{r}
+k5=kmeans(scale(c_pc), 5, 25, 25)
+fviz_cluster(k5, scale(c_pc))
+```
+```{r}
+table(k5$cluster)
+```
+```{r}
+k6=kmeans(scale(c_pc), 7, 25, 25)
+fviz_cluster(k6, scale(c_pc))
+```
+```{r}
+table(k6$cluster)
+```
+```{r}
+k7=kmeans(scale(c_pc), 9, 25, 25)
+fviz_cluster(k7, scale(c_pc))
+```
+```{r}
+table(k7$cluster)
+```
+Since we don't want the size of cluster too small or larger, and try to average the size of clusters, so we think the best k is 5 for PCA model. 
 
 
 
