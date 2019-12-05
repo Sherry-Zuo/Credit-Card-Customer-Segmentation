@@ -3,7 +3,7 @@ title: "Credit Card Customer Segmentation"
 subtitle: BA820 - Fall 2019
 author: "team 7"
 date: "11/20/2019"
-output: pdf_document
+output: html_document
 ---
 
 **Team 7 Members:** Kunpeng Huang, Yoki Liu, Lyufan Pan, Yunlei Zhou, Jiayuan Zou, Sherry Zuo
@@ -136,7 +136,9 @@ cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
 fviz_pca_var(cc_pca, col.var="contrib", 
              gradient.cols=c("#00AFBB","#E7B800","#FC4E07"),
              repel=TRUE)
+##we pick purchase, purchases_trx, balance, cash_advance, cash_advance_frequency, cash advance_trx, purchase_frequency, oneoff_purchases, installments_purchases, purchases_installments_frequency, credit_limit
 ```
+
 ```{r}
 fviz_nbclust(scale(cc), kmeans, method = "silhouette", k.max=15)
 ## choose cluster is 13(7 is also high)
@@ -232,31 +234,76 @@ plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers",col
 ```
 ```{r}
 cc$cluster<-k5$cluster
+##Try different variables plotting with different cluster
 ggplot(cc, aes(x=cluster, y=purchases, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,4000)
 ```
 ```{r}
-cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=purchases_frequency, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,1)
 ```
 ```{r}
-cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,10000)
 ```
 ```{r}
-cc$cluster<-k5$cluster
 ggplot(cc, aes(x=cluster, y=balance, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0,7000)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=balance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0.5,1)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=oneoff_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,5000)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=purchases_installments_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=purchases_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(1,100)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=cash_advance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,2000)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=cash_advance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,0.5)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=cash_advance_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,40)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=installments_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0, 5000)
 ```
 
 
