@@ -305,5 +305,28 @@ ggplot(cc, aes(x=cluster, y=installments_purchases, fill=factor(cluster)))+
   theme(panel.background = element_rect(fill="white"))+
   ylim(0, 5000)
 ```
+```{r}
+ggplot(cc, aes(x=cluster, y=prc_full_payment, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))
 
+```
+For cluster 1: low purchases, high balance, low oneoff_purchases, low prc_full_payment
+For cluster 2: high purchases, high purchases_frequency, high credit limit, high oneoff_purchases, high purchases_trx, low cash_advance, low cash_advance_trx, high prc_full_payment
+For cluster 3: low purchases, low purchase_frequency, low purchases_installments_frequency, low purchases_trx, low installments_purchases, low prc_full_payment, low oneoff_purchases_fr
+For cluster 4: low credit_limit, low balance_frequency, low installments_purchases, low purchases_trx, high cash_advance_frequency
+For cluster 5: high purchases_frequency, high purchases_installments_frequency, low cash_advance_trx, high installments_purchases, high purchases_trx, low cash_advances
 
+Change to better understanding words.
+cluster 1: less repayment with low amount multiple times, and pay less
+cluster 2: spend more money, shopping more, high credit limit, buy expansive stuff, more purchases transaction, use cash less and amount small
+cluster 3: spend less money, shopping less, less installment payments, less transactions, less installment amount
+cluster 4: low credit limit, low using cards, low transactions, more frequently get cash
+cluster 5: more shopping, high frequent installment purchases, not really cash back, high amount of installment pay, high purchase transactions, less amount cash back
+
+Summarize observations to features
+cluster1: scrimp and use credit cards for daily purchases
+cluster2: premium users with high spending behaviors
+cluster3: inactive users
+cluster4: new cardholders
+cluster5: installment users
