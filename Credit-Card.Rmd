@@ -20,6 +20,10 @@ library(skimr)
 library(corrplot)
 library(plotly)
 library(Rtsne)
+library(tidytext)
+library(wordcloud)
+library(quanteda)
+library(tm)
 ```
 
 ```{r}
@@ -155,12 +159,12 @@ get_eigenvalue(cc_pca)
 ```
 
 ```{r}
-k=kmeans(scale(cc), 7, 25, 25)
-fviz_cluster(k, scale(cc))
+k1=kmeans(scale(cc), 7, 25, 25)
+fviz_cluster(k1, scale(cc))
 ```
 
 ```{r}
-table(k$cluster)
+table(k1$cluster)
 ```
 ```{r}
 k2=kmeans(scale(cc), 9, 25, 25)
@@ -487,4 +491,84 @@ For cluster 5:
 normal purchase ~ 0-800, high credit limit ~2000-5000, high balance/freq, low one-off, low installments_purchases/freq, high cash_advances / freq~, low full payment 
 
 tSNE method, features not clear. 
+
+```{r}
+##try text mining
+information<-list(
+  colnum = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30),
+  mains = c(
+"CUST_ID: Identification of Credit Card holder",
+"BALANCE: Balance amount left in their account to make purchases",
+"BALANCE_FREQUENCY: How frequency the Balance is updated, a score between 0 and 1",
+"PURCHASES: Amount of purchases made from the account",
+"ONEOFF_PURCHASES: Maximum purchases amount did in one-go",
+"INSTALLMENTS_PURCHASES: Amount of purchases done in installments",
+"CASH_ADVANCE: Cash in advance given by the users",
+"PURCHASES_FREQUENCY: How frequency the Purchases are being made, score
+between 0 and 1",
+"ONEOFF_PURCHASES_FREQUENCY: How frequency Purchases are happening in
+one-go",
+"PURCHASES_INSTALLMENTS_FREQUENCY: How frequency purchases in	
+installments are being done",
+"CASH_ADVANCE_FREQUENCY: How frequency the cash in advance being paid",
+"CASH_ADVANCE_TRX: Number of Transactions made with Cash in Advance",
+"PURCHASES_TRX: Number of purchases transactions made",
+"CREDIT_LIMIT: Limit of Credit Card for users",
+"PAYMENTS: Amount of Payments done by the users",
+"MINIMUM_PAYMENTS: Minimum amount of payments made by the users",
+"PRC_FULL_PAYMENT: Percent of full payment paid by the users",
+"TENURE: Tenure of credit card service for users",
+"overview: The problem that motivates us is the segmentation of customers that could be very necessary and powerful to define marketing strategies. The credit card usage behavior of customers with 17 behavioral features seems to be a perfect dataset for us to explore the customers segmentation on their purchasing behaviors with credit cards, consider score",
+"title: Credit Card Customers Segmentation",
+"dataset: The sample Dataset summarizes the usage behavior of 8950 active credit card holders during the last 6 months. The file is at a customers level with 18 behavioral variables.",
+"Focus on variables balance, balance_frequency, purchases, purchases_frequency, oneoff_purchases, oneoff_purchases_frequency, installments_purchases.", 
+"Baseline clustering:
+Silhouette score:  clustering is 13(7 and 9 is also very high)
+WSS- clustering is 2, 4, 7, 9
+Compare those cluster plots, we think k=9 is the best since each cluster has a similar size in the baseline clustering segmentaion. ",
+"Dimension Reduction (PCA model)
+Compare Eigenvalue and Cumulative Variance for dimension",
+"eigenvalue, we want to eigenvalue>1 for dimension, Dimension with 5; however, since we don’t want cumulative variance too small, eigenvalue>0.7 for dimension, so we choose Dimension with 8 which also has 85% of cumulative variance.",
+"Clustering for PCA model: Silhouette score- clustering is 2
+WSS- clustering is 2, 5, 7, 9
+Since we don't want the size of the clustering too small or larger and try to average the size of clustering, so the best k is 5 for the PCA model.
+Our best model overall:Thus, our best model is Dimension 8 and clustering 5. ",
+"Add clustering back to the original dataset, compare variables for clustering based on different boxplots, the characteristics of each clustering. see whether oneoff obvious
+1: users for daily purchases  
+2: premium card users with high spending behaviors  
+3: inactive card users  
+4: new card users  
+5: installment card users",
+"Based on those 5 features, we design different market strategies for various target customers.",
+"For cluster 1, 2, 3, 4, 5, consider credit score",
+"comments:marketing strategies based on the profiles of the customers is your goal, create a marketing strategy around segmentation, credit score guess"
+)
+)
+```
+```{r}
+information$mains=str_to_lower(information$mains)
+information=as.data.frame(information)
+information$mains=as.character(information$mains)
+information$mains = gsub("_", " ", information$mains)
+information$mains = removeNumbers(information$mains)
+credit_tokens = information %>% 
+  unnest_tokens(token, mains, strip_punct=T) %>% 
+  anti_join(get_stopwords(), get_stopwords(source="snowball"), get_stopwords(source="stopwords-iso"), get_stopwords(source="smart"), by=c("token"="word"))
+##address these common words that are not adding value
+credit_tokens %>% 
+  count(token, sort=T) %>% 
+  head(n=25)%>%
+  ggplot(aes(x=token, y=n))+
+  geom_bar(stat="identity", fill="#E7B800")+
+  theme(panel.background = element_rect(fill="white"))+
+  theme(axis.text.x=element_text(angle=30))##get useful top words
+tidy_tokens=credit_tokens%>%
+  count(token, sort=T)
+par(mfrow = c(1,1))
+wordcloud(words=tidy_tokens$token,
+          freq=tidy_tokens$n,
+          min.freq=4,
+          max.words=45,
+          colors=brewer.pal(8, "Dark2"))
+```
 
