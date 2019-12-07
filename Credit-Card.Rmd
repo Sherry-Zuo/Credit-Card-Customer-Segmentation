@@ -159,6 +159,7 @@ get_eigenvalue(cc_pca)
 ```
 
 ```{r}
+set.seed(820)
 k1=kmeans(scale(cc), 7, 25, 25)
 fviz_cluster(k1, scale(cc))
 ```
@@ -200,6 +201,7 @@ fviz_nbclust(scale(c_pc), kmeans, method = "wss", k.max=15)
 ## choose cluster is 2, 5, 7, 9
 ```
 ```{r}
+set.seed(820)
 k4=kmeans(scale(c_pc), 2, 25, 25)
 fviz_cluster(k4, scale(c_pc))
 ```
@@ -267,7 +269,7 @@ ggplot(cc, aes(x=cluster, y=balance, fill=factor(cluster)))+
 ggplot(cc, aes(x=cluster, y=balance_frequency, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
-  ylim(0.5,1)
+  ylim(0.7,1)
 ```
 ```{r}
 ggplot(cc, aes(x=cluster, y=oneoff_purchases, fill=factor(cluster)))+
