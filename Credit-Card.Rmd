@@ -317,19 +317,12 @@ For cluster 3: low purchases, low purchase_frequency, low purchases_installments
 For cluster 4: low credit_limit, low balance_frequency, low installments_purchases, low purchases_trx, high cash_advance_frequency  
 For cluster 5: high purchases_frequency, high purchases_installments_frequency, low cash_advance_trx, high installments_purchases, high purchases_trx, low cash_advances  
 
-Change to better understanding words.
-cluster 1: less repayment with low amount multiple times, and pay less  
-cluster 2: spend more money, shopping more, high credit limit, buy expansive stuff, more purchases transaction, use cashless and amount small  
-cluster 3: spend less money, shopping less, fewer installment payments, fewer transactions, less installment amount  
-cluster 4: low credit limit, low using cards, low transactions, more frequently get cash  
-cluster 5: more shopping, high frequent installment purchases, not really cashback, high amount of installment payments, high purchase transactions, less amount cash back  
-
 **Summarize observations to features**
-cluster1: scrimp and use credit cards for daily purchases  
+cluster1: users for daily purchases  
 cluster2: premium users with high spending behaviors  
 cluster3: inactive users  
 cluster4: new cardholders  
-cluster5: installment users  
+cluster5: installment users 
 
 
 ```{r}
@@ -440,7 +433,7 @@ ggplot(cc2, aes(x=cluster, y=balance_frequency, fill=factor(cluster)))+
 ggplot(cc2, aes(x=cluster, y=oneoff_purchases, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))+
-  ylim(0,5000)
+  ylim(0,2000)
 ```
 ```{r}
 ggplot(cc2, aes(x=cluster, y=purchases_installments_frequency, fill=factor(cluster)))+
@@ -482,28 +475,16 @@ ggplot(cc2, aes(x=cluster, y=prc_full_payment, fill=factor(cluster)))+
   geom_boxplot()+
   theme(panel.background = element_rect(fill="white"))
 ```
-For cluster 1: low purchases, low purchase_frequency, 
-For cluster 2: high purchases, high purchases_frequency, high credit limit, high oneoff_purchases, high purchases_trx, low cash_advance, low cash_advance_trx, high prc_full_payment  
-For cluster 3: low purchases, low purchase_frequency, low purchases_installments_frequency, low purchases_trx, low installments_purchases, low prc_full_payment, low oneoff_purchases_fr  
-For cluster 4: low credit_limit, low balance_frequency, low installments_purchases, low purchases_trx, high cash_advance_frequency  
-For cluster 5: high purchases_frequency, high purchases_installments_frequency, low cash_advance_trx, high installments_purchases, high purchases_trx, low cash_advances  
+For cluster 1: 
+low purchases/freq, normal credit 2000, normal balance, high freq 1700, low one-off, low installment /freq, low full pay
+For cluster 2: 
+high purchases/freq, high credit limit, low balance, high oneoff_purchases, low cash_advance, low cash_advance_trx, high installment, high Full payment
+For cluster 3: 
+normal purchases, 400, low credit limit, low balance, low one-off payment, low cash, normal full payment percentage
+For cluster 4: 
+normal purchase 200-1000, normal freq, mid credit_limit, low balance, low one-off purchase, normal installments_purchases, low cash freq, low cash
+For cluster 5: 
+normal purchase ~ 0-800, high credit limit ~2000-5000, high balance/freq, low one-off, low installments_purchases/freq, high cash_advances / freq~, low full payment 
 
-Change to better understanding words.
-cluster 1: less repayment with low amount multiple times, and pay less  
-cluster 2: spend more money, shopping more, high credit limit, buy expansive stuff, more purchases transaction, use cashless and amount small  
-cluster 3: spend less money, shopping less, fewer installment payments, fewer transactions, less installment amount  
-cluster 4: low credit limit, low using cards, low transactions, more frequently get cash  
-cluster 5: more shopping, high frequent installment purchases, not really cashback, high amount of installment payments, high purchase transactions, less amount cash back  
-
-**Summarize observations to features**
-cluster1: scrimp and use credit cards for daily purchases  
-cluster2: premium users with high spending behaviors  
-cluster3: inactive users  
-cluster4: new cardholders  
-cluster5: installment users  
-
-```{r}
-
-```
-
+tSNE method, features not clear. 
 
