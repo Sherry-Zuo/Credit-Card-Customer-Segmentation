@@ -1,0 +1,673 @@
+---
+title: "Credit Card Customer Segmentation"
+subtitle: BA820 - Fall 2019
+author: "team 7"
+date: "12/09/2019"
+output: html_document
+---
+
+**Team 7 Members:** Kunpeng Huang, Yoki Liu, Lyufan Pan, Yunlei Zhou, Jiayuan Zou, Sherry Zuo
+```{r}
+## load the packages
+library(readr)
+library(ggplot2)
+library(dplyr)
+library(purrr)
+library(cluster)
+library(factoextra)
+library(tidyverse)
+library(skimr)
+library(corrplot)
+library(plotly)
+library(Rtsne)
+library(tidytext)
+library(wordcloud)
+library(quanteda)
+library(tm)
+library(ggpubr)
+#install.packages("GGally")
+library(GGally)
+library(plyr)
+library(animation)
+#install.packages("viridis")
+#install.packages('viridisLite')
+library(viridis)
+detach(package:plyr)
+#install.packages('fmsb')
+library(fmsb)
+library(RColorBrewer)
+library(scales)
+library(yarrr)
+#devtools::install_github("ricardo-bion/ggradar", dependencies=TRUE)
+library(ggradar)
+library(plyr)
+```
+
+#######Part 1 data #######
+```{r}
+## load the dataset
+data<-read_csv("CC GENERAL.csv")
+```
+
+```{r}
+colnames(data)<-tolower(colnames(data))
+colnames(data)
+```
+
+```{r}
+##Data Cleaning
+cc<-data%>%select(-cust_id)
+colmean <- function(x) replace(x, is.na(x), mean(x, na.rm = TRUE))
+cc <- replace(cc, TRUE, lapply(cc, colmean))
+glimpse(cc)
+skim(cc)
+##There are 17 numeric variables and 8950 observations. Replace NAs with colmeans. 
+```
+```{r}
+summary(lm(credit_limit~. , cc))
+```
+
+```{r fig.width=12, fig.height=12}
+cc_c<-cor(cc)
+corrplot(cc_c,
+         type="upper",
+         diag=F,
+         method="color",
+         order="hclust")
+```
+Based on the correlation plot colors, we think there are more than 4 clusters in our dataset.
+```{r}
+##Explore data
+ggplot(cc,aes(x=purchases_frequency)) +
+  geom_histogram()+
+  theme(panel.background = element_rect(fill="white"))
+```
+Based on this histigram, this graph shows us that the purchasing polarization. x-axis indicates that how frequently the purchases are being made, 1 = very frequently, and 0 = not very frequently. Most of transcations is concetred on the either not very frequently or very frequently group.
+```{r}
+ggplot(cc, aes(x = balance_frequency, y = balance, color = factor(tenure)))+
+  geom_point(alpha = 0.2)+
+  theme(panel.background = element_rect(fill="white"))
+```
+```{r}
+##cash_advance_frequency with cash_advance_trx
+##purchases with purchases_installments_frequency
+##purchases_frequency with purchases_installments_frequency
+ggplot(cc, aes(x = purchases_installments_frequency, y = purchases, color = purchases_frequency))+
+  geom_point()+
+  theme(panel.background = element_rect(fill="white"))
+```
+ 
+```{r}
+##balance
+par(mfrow = c(2,1))
+hist(x=cc$balance)
+boxplot(cc$balance, horizontal = T)->q1
+##balance freq: both withdraw and saving
+par(mfrow = c(2,1))
+hist(x=cc$balance_frequency)
+boxplot(cc$balance_frequency, horizontal = T)->q2
+##purchases
+par(mfrow = c(2,1))
+hist(x=cc$purchases)
+boxplot(cc$purchases, horizontal = T)->q3
+##purchase freq
+par(mfrow = c(2,1))
+hist(x=cc$purchases_frequency)
+boxplot(cc$purchases_frequency, horizontal = T)->q4
+##oneoff purchase: maximum purchase amount
+par(mfrow = c(2,1))
+hist(x=cc$oneoff_purchases)
+boxplot(cc$oneoff_purchases, horizontal = T)->q5
+##oneoff purchase frequency: maximum purchase refresh freq
+par(mfrow = c(2,1))
+hist(x=cc$oneoff_purchases_frequency)
+boxplot(cc$oneoff_purchases_frequency, horizontal = T)->q6
+##oneoff purchase: maximum installment amount
+par(mfrow = c(2,1))
+hist(x=cc$installments_purchases)
+boxplot(cc$installments_purchases, horizontal = T)->q7
+```
+
+#######Part 2 PCA+Kmeans #######
+```{r}
+## Hclust
+cc_z = scale(cc)
+#Manhattan distance: 
+cc_dm = dist(cc_z, method="manhattan")
+#Complete linkage: 
+clust = hclust(cc_dm)
+table(cutree(clust, k=7))
+sapply(7:13, function(x) table(cutree(clust, k=x)))
+```
+
+```{r}
+##Fit the PCA model
+cc_pca=prcomp(cc, center=TRUE, scale=TRUE)
+```
+```{r fig.width=6, fig.height=6}
+fviz_pca_var(cc_pca, col.var="contrib", 
+             gradient.cols=c("#00AFBB","#E7B800","#FC4E07"),
+             repel=TRUE)
+##we pick purchase, purchases_trx, balance, cash_advance, cash_advance_frequency, cash advance_trx, purchase_frequency, oneoff_purchases, installments_purchases, purchases_installments_frequency, credit_limit
+```
+
+```{r}
+fviz_nbclust(scale(cc), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 13(7 is also high)
+fviz_nbclust(scale(cc), kmeans, method = "wss", k.max=15)
+## choose cluster is 2, 4, 7, 9
+```
+
+
+```{r}
+##Choose Dimensions
+get_eigenvalue(cc_pca)
+```
+Based on the eigenvalue, we want to choose eigenvalue>1, but we want cumulative variance too small, so we choose Dimension with 8 which has a 85% of cumulative variance. 
+
+```{r}
+set.seed(820)
+k1=kmeans(scale(cc), 7, 25, 25)
+fviz_cluster(k1, scale(cc))
+k2=kmeans(scale(cc), 9, 25, 25)
+fviz_cluster(k2, scale(cc))
+k3=kmeans(scale(cc), 13, 25, 25)
+fviz_cluster(k3, scale(cc))
+```
+
+```{r}
+tt1=data.frame(table(k1$cluster))
+tt2=data.frame(table(k2$cluster))
+tt3=data.frame(table(k3$cluster))
+listP<-list()
+listP[[1]]=data.frame(t(tt1))[2,]
+listP[[2]]=data.frame(t(tt2))[2,]
+listP[[3]]=data.frame(t(tt3))[2,]
+do.call(rbind.fill,listP)
+```
+
+In the original model, we think k=9 is the best since each cluster has similar size. 
+
+
+#PCA
+```{r}
+## apply the features -- could use new data, or the original as I do below
+c_pcs=predict(cc_pca, newdata=cc)
+class(c_pcs)
+c_pcs=as.data.frame(c_pcs)
+head(c_pcs)
+```
+```{r}
+c_pc=c_pcs[, 1:8]
+head(c_pc)
+```
+
+```{r}
+fviz_nbclust(scale(c_pc), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 2
+```
+```{r}
+fviz_nbclust(scale(c_pc), kmeans, method = "wss", k.max=15)
+## choose cluster is 2, 5, 7, 9
+```
+
+```{r}
+set.seed(820)
+k4=kmeans(scale(c_pc), 2, 25, 25)
+fviz_cluster(k4, scale(c_pc))
+k5=kmeans(scale(c_pc), 5, 25, 25)
+fviz_cluster(k5, scale(c_pc))
+k6=kmeans(scale(c_pc), 7, 25, 25)
+fviz_cluster(k6, scale(c_pc))
+k7=kmeans(scale(c_pc), 9, 25, 25)
+fviz_cluster(k7, scale(c_pc))
+```
+
+```{r}
+tt4=data.frame(table(k4$cluster))
+tt5=data.frame(table(k5$cluster))
+tt6=data.frame(table(k6$cluster))
+tt7=data.frame(table(k7$cluster))
+listP<-list()
+listP[[1]]=data.frame(t(tt4))[2,]
+listP[[2]]=data.frame(t(tt5))[2,]
+listP[[3]]=data.frame(t(tt6))[2,]
+listP[[4]]=data.frame(t(tt7))[2,]
+do.call(rbind.fill,listP)
+```
+
+Since we don't want the size of the cluster too small or larger and try to average the size of clusters, so we think the best k is 5 for the PCA model.  
+
+```{r}
+##Results business related
+##Add clustering back to the original dataset
+c_pc$cluster<-k5$cluster
+```
+```{r}
+plot_ly(x=c_pc[,1], y=c_pc[,2], z=c_pc[,3], type="scatter3d", mode="markers",color =factor(c_pc$cluster))
+```
+```{r}
+cc$cluster<-k5$cluster
+head(cc)
+```
+
+
+```{r}
+##Try different variables plotting with different cluster
+#1
+ggplot(cc, aes(x=cluster, y=purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,4000)->p1
+#2
+ggplot(cc, aes(x=cluster, y=purchases_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,1)->p2
+#3
+ggplot(cc, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,10000)->p3
+#4
+ggplot(cc, aes(x=cluster, y=balance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,7000)->p4
+#5
+ggplot(cc, aes(x=cluster, y=balance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0.7,1)->p5
+#6
+ggplot(cc, aes(x=cluster, y=oneoff_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,5000)->p6
+ggarrange(p1,p2,p3,p4,p5,p6,ncol = 2, nrow = 3)
+```
+
+```{r}
+#7
+ggplot(cc, aes(x=cluster, y=purchases_installments_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))->p7
+#8
+ggplot(cc, aes(x=cluster, y=purchases_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(1,100)->p8
+#9
+ggplot(cc, aes(x=cluster, y=cash_advance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,2000)->p9
+#10
+ggplot(cc, aes(x=cluster, y=cash_advance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,0.5)->p10
+#11
+ggplot(cc, aes(x=cluster, y=cash_advance_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,40)->p11
+#12
+ggplot(cc, aes(x=cluster, y=installments_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0, 5000)->p12
+ggarrange(p7,p8,p9,p10,p11,p12,ncol = 2, nrow = 3)
+```
+```{r}
+ggplot(cc, aes(x=cluster, y=prc_full_payment, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))->p13
+p13
+```
+```{r}
+cc %>% select(purchases,purchases_frequency,credit_limit,balance,balance_frequency,oneoff_purchases,purchases_installments_frequency,purchases_trx,cash_advance,cash_advance_frequency,cash_advance_trx,installments_purchases,prc_full_payment,cluster) %>%group_by(cluster) %>% 
+  summarise(purchases=mean(purchases),purchases_frequency=mean(purchases_frequency),credit_limit=mean(credit_limit),balance=mean(balance),balance_frequency=mean(balance_frequency),balance_frequency=mean(balance_frequency),oneoff_purchases=mean(oneoff_purchases),pur_install_freq=mean(purchases_installments_frequency),pur_trx=mean(purchases_trx),cash_advance=mean(cash_advance),cash_advance_frequency=mean(cash_advance_frequency),cash_advance_trx=mean(cash_advance_trx),installments_purchases=mean(installments_purchases),prc_full_payment=mean(prc_full_payment)) %>% as.data.frame() ->radar1
+rownames(radar1) <-paste("cluster" , letters[1:5] , sep="-")
+radar1 %>% select(-cluster)->radar1
+```
+
+```{r}
+# Set graphic colors
+coul <- brewer.pal(5, "Dark2")
+colors_border <- coul
+colors_in <- alpha(coul,0.3)
+
+radarchart(radar1, axistype=0 , maxmin=F,
+    pcol=colors_border, colors_in, plwd=3 , plty=1.5,
+    cglcol="grey", cglty=1, axislabcol="black", cglwd=0.8, 
+    vlcex=0.8 
+    )
+legend(x=1.6, y=1.2, legend = paste("cluster" , 1:5), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1, pt.cex=2)
+```
+
+```{r}
+radar1$cluster<-c(1:5)
+p <- ggRadar(radar1, aes(group = cluster), 
+     rescale = FALSE, legend.position = "none",
+     size = 1, interactive = FALSE, use.label = TRUE) +4
+     facet_wrap(~cluster)
+```
+
+
+```{r}
+#new try
+#13
+ggplot(cc, aes(x=cluster, y=prc_full_payment, fill=factor(cluster)))+
+  geom_boxplot()+geom_violin(fill='white', alpha=0.5)+
+  theme(panel.background = element_rect(fill="white"))
+pirateplot(formula = prc_full_payment ~ cluster,
+           data = cc,
+           theme = 3)
+```
+Add clustering back to the original dataset, compare variables for clusters based on different boxplots,  and summarize the features of each cluster and define the characteristics of each cluster of card users.  
+**Features: **  
+Cluster 1: high credit, low purchase, no installment, high cash advance  
+Cluster 2: median credit, no cash advance, high purchase, high purchase frequency, high installment and like to run out of credit but then pay full-back  
+Cluster 3: low credit, try every feature of the card  
+Cluster 4: low credit, low activities in every feature  
+Cluster 5: median credit, high purchase, high purchase frequency, high installments,  but low full pay back  
+**Characteristics:**    
+Cluster 1: (921) long-time users for daily purchases and like cash in advance    
+Cluster 2: (1224) users live from paycheck to paycheck    
+Cluster 3: (727) new card users    
+Cluster 4: (3878) inactive cardholders    
+Cluster 5: (2200) installment users with high spending behavior    
+
+
+#######Part 3  t-SNE+kmeans #######  
+```{r}
+##tSNE
+cc2<-cc%>%select(-cluster)
+cc_tsne=Rtsne(cc2,
+               verbose=TRUE,
+               max_iter=500,
+               check_duplicates=FALSE)
+
+## remember that this is for plotting, so we can get the 2d space from Y
+class(cc_tsne)
+names(cc_tsne)
+
+
+## lets create the plot
+tsne_proj=cc_tsne$Y
+class(tsne_proj)
+dim(tsne_proj)
+head(tsne_proj)
+nrow(cc) ==nrow(tsne_proj)
+tsne_df=as.data.frame(tsne_proj)
+plot(tsne_df$V1, tsne_df$V2, type="p", pch=19)
+
+## just a big hairball, but lets clean it up and map onto it
+cc_final=cbind(cc, tsne_df)
+```
+```{r}
+fviz_nbclust(scale(tsne_proj), kmeans, method = "silhouette", k.max=15)
+## choose cluster is 6
+fviz_nbclust(scale(tsne_proj), kmeans, method = "wss", k.max=15)
+## choose cluster is 3, 4, 7, 8
+```
+```{r}
+z2<-scale(as.data.frame(tsne_proj))
+k8=kmeans(z2, 3, 25, 25)
+fviz_cluster(k8, z2)->f8
+k9=kmeans(z2, 4, 25, 25)
+fviz_cluster(k9, z2)->f9
+k10=kmeans(z2, 6, 25, 25)
+fviz_cluster(k10, z2)->f10
+k11=kmeans(z2, 7, 25, 25)
+fviz_cluster(k11, z2)->f11
+k12=kmeans(z2, 8, 25, 25)
+fviz_cluster(k12, z2)->f12
+k13=kmeans(z2, 5, 25, 25)
+fviz_cluster(k13, z2)->f13
+f8
+f9
+f10
+f11
+f12
+f13
+```
+```{r}
+t3=data.frame(table(k8$cluster))
+t4=data.frame(table(k9$cluster))
+t6=data.frame(table(k10$cluster))
+t7=data.frame(table(k11$cluster))
+t8=data.frame(table(k12$cluster))
+t5=data.frame(table(k13$cluster))
+listQ<-list()
+listQ[[1]]=data.frame(t(t3))[2,]
+listQ[[2]]=data.frame(t(t4))[2,]
+listQ[[3]]=data.frame(t(t5))[2,]
+listQ[[4]]=data.frame(t(t6))[2,]
+listQ[[5]]=data.frame(t(t7))[2,]
+listQ[[6]]=data.frame(t(t8))[2,]
+do.call(rbind.fill,listQ)
+```
+
+chose k=5
+```{r}
+cc2$cluster<-k13$cluster
+```
+
+```{r}
+##Try different variables plotting with different cluster
+ggplot(cc2, aes(x=cluster, y=purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,4000)->g1
+ggplot(cc2, aes(x=cluster, y=purchases_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,1)->g2
+ggplot(cc2, aes(x=cluster, y=credit_limit, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,10000)->g3
+ggplot(cc2, aes(x=cluster, y=balance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,6000)->g4
+ggplot(cc2, aes(x=cluster, y=balance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0.5,1)->g5
+ggplot(cc2, aes(x=cluster, y=oneoff_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,2000)->g6
+ggarrange(g1,g2,g3,g4,g5,g6,ncol = 2, nrow = 3)
+```
+```{r}
+ggplot(cc2, aes(x=cluster, y=purchases_installments_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))->g7
+ggplot(cc2, aes(x=cluster, y=purchases_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(1,100)->g8
+ggplot(cc2, aes(x=cluster, y=cash_advance, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,2000)->g9
+ggplot(cc2, aes(x=cluster, y=cash_advance_frequency, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,0.5)->g10
+ggplot(cc2, aes(x=cluster, y=cash_advance_trx, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0,30)->g11
+ggplot(cc2, aes(x=cluster, y=installments_purchases, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))+
+  ylim(0, 4000)->g12
+ggarrange(g7,g8,g9,g10,g11,g12,ncol = 2, nrow = 3)
+```
+```{r}
+ggplot(cc2, aes(x=cluster, y=prc_full_payment, fill=factor(cluster)))+
+  geom_boxplot()+
+  theme(panel.background = element_rect(fill="white"))->g13
+g13
+```
+
+```{r}
+cc2 %>% select(purchases,purchases_frequency,credit_limit,balance,balance_frequency,oneoff_purchases,purchases_installments_frequency,purchases_trx,cash_advance,cash_advance_frequency,cash_advance_trx,installments_purchases,prc_full_payment,cluster) %>%group_by(cluster) %>% 
+  summarise(purchases=mean(purchases),purchases_frequency=mean(purchases_frequency),credit_limit=mean(credit_limit),balance=mean(balance),balance_frequency=mean(balance_frequency),balance_frequency=mean(balance_frequency),oneoff_purchases=mean(oneoff_purchases),pur_install_freq=mean(purchases_installments_frequency),pur_trx=mean(purchases_trx),cash_advance=mean(cash_advance),cash_advance_frequency=mean(cash_advance_frequency),cash_advance_trx=mean(cash_advance_trx),installments_purchases=mean(installments_purchases),prc_full_payment=mean(prc_full_payment)) %>% as.data.frame() ->radar2
+rownames(radar2) <-paste("cluster" , letters[1:5] , sep="-")
+radar2 %>% select(-cluster)->radar2
+coul <- brewer.pal(5, "Dark2")
+colors_border <- coul
+colors_in <- alpha(coul,0.3)
+
+radarchart(radar2, axistype=0 , maxmin=F,
+    pcol=colors_border, pfcol=colors_in, plwd=3 , plty=1.5,
+    cglcol="grey", cglty=1, axislabcol="black", cglwd=0.8, 
+    vlcex=0.8 
+    )
+legend(x=1.6, y=1.2, legend = paste("cluster" , 1:5), bty = "n", pch=20 , col=colors_in , text.col = "grey", cex=1, pt.cex=2)
+```
+
+Based on the result of t-SNE model, we try k with 4 to 8 and finally get the clustering model with each of them.  
+
+Unfortunately, after getting the features of each cluster, we get the idea that features not clear in the tSNE method, especially when we compare the features model with PCA.   
+
+Here is the example of k=5. In the cluster plot, it is hard to find a clear division of groups, kmean just divides the entire two-dimensional space evenly. Plus, in the radar plot of each cluster, the unclear differences between groups make it difficult to describe customer characteristics in the real world.  
+
+```{r}
+##try text mining
+text<-list(
+  colnum = c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15),
+  mains = c(
+"Credit Card User Segmentation",
+"Business Problem
+The purpose of this project is to explore the customer segmentation based on their purchase behavior with credit card and to help the credit card company to design different marketing strategy for various target customer based on characteristic explored of each cluster",
+"Dataset	
+Credit Card Dataset for Clustering
+The sample Dataset summarizes the usage behavior of 8950 active credit cardholder during the last 6 months. The file is at a customer level with 18 variables.",
+"Data Cleaning
+In the dataset, there are 313 missing values in variable minimum_payment, and we used the mean of the minimum payment to replace the missing values. Since customer id is not used in the analysis, we removed it from the dataset. After data cleaning, we have 17 numeric variables and 8950 observation",
+"Data Exploration
+Balance: The left balance of majority user are below $5000 with an average of $1564.47 
+Balance Frequency: The majority of the cardholder are active and have a balance frequency around 1
+Purchase frequency:  The graph shows us that the purchase polarization. Most credit card record is concentrated on either not very frequently or very frequently group
+One-off purchase: The mean of one-off purchase is $592.4, and most credit cardholder uses this credit card in the routine purchase
+One-off purchase frequency: since this card is widely used in daily life, the one-off purchase frequency is pretty low (mean = 0.083). Which stands for those customer who were not tent to purchase expensive items
+Installment_purchase: Those groups of users were not relying on using this card to purchase expensive items based on the installment payment method ( mean = $411.1) 
+Purchase_Installment_Frequency: 43.7% of cardholder were very inactive (frequency = 0 ) on using installment payment method, and 14.9% of cardholder were heavily relied (frequency = 0) on using the installment payment method 
+Cash_Advanc_TRX: Most users were not active in withdrawing cash. However, we detected that a limited customer whose number of transaction made with cash is pretty big, and we need to care more about their purchase behavior. Since the primary goal of using credit is not withdraw cash  
+Cash_Advance_Frequency: Most user were not frequently withdrawn cash 
+Credit_Limit: Most users credit limit’s range is below $5,000
+Prc_Full_Payment: the mean percent of full payment paid by the user is pretty low ( mean = 0.15) we need to launch new strategy to encourage users to pay back the money as much as they can",
+"Analysis Methodology
+Baseline clustering Model 
+Silhouette score: choose cluster is 13 (7 and 9 is also very high, similar for every size of k)
+WSS-choose cluster is 2, 4, 7, 9: sum of square error is too large
+Compare those cluster plots, we think k=9 is the best since each cluster has a similar size in the baseline clustering. ",
+"Dimension Reduction Model (t-SNE model+Kmeans)
+ 
+ 
+Based on the result of t-SNE model,  we try k with 4 to 8 and finally get the clustering model with each of them.
+ 
+Unfortunately, after getting the feature of each cluster, we get the idea that feature not clear in the tSNE method, especially when we compare the feature model with PCA later. 
+Here is the example of k=5. In the cluster plot, it is hard to find clear division of group, kmean just divides the entire two-dimension space evenly. Plus, in the radar plot of each cluster, the unclear difference between groups make it difficult to describe customer characteristic in the real world.",
+"Correlation Plot 
+Based on the correlation plot colors, we think there are more than 4 group in our dataset.",
+"Dimension Reduction Model (PCA model+Kmeans)
+Compare Eigenvalue and Cumulative Variance
+eigenvalue
+variance.percent
+cumulative.variance.percent
+Dimension.5
+1.0646746466
+6.262797e+00
+70.12678
+Dimension.8
+0.7237725420
+4.257486e+00
+85.02171
+Based on the eigenvalue, we want to choose eigenvalue>1, so we could choose Dimension with 5; however, since we don’t want cumulative variance too small, so we choose Dimension with 8 which has a higher cumulative variance (around 85%).",
+"Clustering for PCA model
+Silhouette score-choose cluster is 2
+WSS-choose cluster is 2, 5, 7, 9
+Since we don't want the size of the cluster too small or larger and try to average the size of cluster, so we think the best k is 5 for the PCA model.",
+"Our best model overall:Thus, our best model is Dimension 8 and cluster 5. ",
+"Performance Evaluation:
+Add clustering back to the original dataset, compare variables for cluster based on different boxplots,  and summarize the feature of each cluster and define the characteristic of each cluster of card user.",
+"Feature: 
+Cluster 1: high credit, low purchase, no installment, high cash advance
+Cluster 2: median credit, no cash advance, high purchase, high purchase frequency, high installment and like to run out of credit but then pay full-back
+Cluster 3: low credit, try every feature of the card
+Cluster 4: low credit, low activities in every feature
+Cluster 5: median credit, high purchase, high purchase frequency, high installment,  but low full pay back",
+"Characteristic:
+Cluster 1: (921) long-time users for daily purchase and like cash in advance
+Cluster 2: (1224) users live from paycheck to paycheck
+Cluster 3: (727) new card users
+Cluster 4: (3878) inactive cardholder
+Cluster 5: (2200) installment users with high spending behavior",
+"Results business related  
+Marketing Strategy Recommendation  
+Based on those 5 feature, we design different marketing strategy for various target customer.  
+**Cluster1: **long-time user for daily purchase and like cash in advance  
+Generalize cashback focused credit card. Having policy like unlimited 1% cash back on every purchase or on up to a certain amount in combined purchase in bonus category (like gas stations, grocery stores, etc.) each quarter. Customer in cluster1 that use credit card for small purchase and daily purchase are usually very economical and will be attracted by adding on benefit.  
+**Cluster2: **user live from paycheck to paycheck  
+Generalize bonus point focused credit card with a certain amount of annual fee. Having policy like earning a certain amount of bonus points after the customer spends 3,000 dollars on purchase in the first three months from account opening, and that allows them to redeem the points for shopping, travel, or etc. Furthermore, if the customer spend more on traveling, we can also have policies like 300 dollars annual travel credit as reimbursement or double points on travel expenses. Customer in cluster 2 with high spending behavior care more about their living quality and are willing to spend money on enjoyment.  
+**Cluster3: **new card user   
+Generalize special incentives for new card user. Sending out introduction mails to give them a brief summary of how credit card work and target them with titles like “pre-approved”, “benefit card” and lead them to keep using the card. Offer 3% cash back on selected category and let the customer choose which category they would like to activate. The majority of the new card user are students and targeting their own spending interest will be a good way to make them forming the habits of using credit card.  
+**Cluster4: **inactive cardholder  
+Generalize a comprehensive credit card to target inactive cardholder. People don’t use credit card that often might prefer to use debit card to prevent from spending too much money or have lots of credit card to choose from. An all-sided credit card may quality their needs and attract them to use our credit card more often than the others. For example like no annual fee, free or low apr, and unlimited 2-3% cash back on all purchase. Customer in cluster 4 is difficult to perceive and offering all-sided strategy will be an appropriate way to target them.  
+**Cluster5: **installment user with high spending behavior  
+Generalize benefit like priority airport lounges, room upgrades, and special gifts for purchase focused credit card but with a certain amount of APR required. We may target installment user with free APR for the first six months, and offering free balance transfer function to satisfy their needs. Customer in cluster 5 usually spend a lot but prefer to do installment, thus premium benefit with limited time of free APR will be exactly what they need when applying for credit card."
+)
+)
+```
+
+```{r}
+text$mains=str_to_lower(text$mains)
+text=as.data.frame(text)
+text$mains=as.character(text$mains)
+text$mains = gsub("_", " ", text$mains)
+text$mains = removeNumbers(text$mains)
+credit_tokens = text %>% 
+  unnest_tokens(token, mains, strip_punct=T) %>% 
+  anti_join(get_stopwords(), get_stopwords(source="snowball"), get_stopwords(source="stopwords-iso"), get_stopwords(source="smart"), by=c("token"="word"))
+##address these common words that are not adding value
+credit_tokens %>% 
+  count(token, sort=T) %>% 
+  head(n=25)%>%
+  ggplot(aes(x=token, y=n))+
+  geom_bar(stat="identity", fill="#E7B800")+
+  theme(panel.background = element_rect(fill="white"))+
+  theme(axis.text.x=element_text(angle=30))##get useful top words
+tidy_tokens=credit_tokens%>%
+  count(token, sort=T)
+par(mfrow = c(1,1))
+wordcloud(words=tidy_tokens$token,
+          freq=tidy_tokens$n,
+          min.freq=5,
+          max.words=45,
+          colors=brewer.pal(8, "Dark2"))
+```
+
+Results business related  
+Marketing Strategies Recommendation  
+Based on those 5 features, we design different market strategies for various target customers.  
+**Cluster1: **long-time users for daily purchases and like cash in advance  
+Generalize cashback focused credit card. Having policies like unlimited 1% cash back on every purchase or on up to a certain amount in combined purchases in bonus categories (like gas stations, grocery stores, etc.) each quarter. Customers in cluster1 that use credit cards for small purchases and daily purchases are usually very economical and will be attracted by adding on benefits.  
+**Cluster2: **users live from paycheck to paycheck  
+Generalize bonus point focused credit card with a certain amount of annual fee. Having policies like earning a certain amount of bonus points after the customer spends 3,000 dollars on purchases in the first three months from account opening, and that allows them to redeem the points for shopping, travel, or etc. Furthermore, if the customers spend more on traveling, we can also have policies like 300 dollars annual travel credit as reimbursement or double points on travel expenses. Customers in cluster 2 with high spending behaviors care more about their living quality and are willing to spend money on enjoyment.  
+**Cluster3: **new card users   
+Generalize special incentives for new card users. Sending out introduction mails to give them a brief summary of how credit cards work and target them with titles like “pre-approved”, “benefit cards” and lead them to keep using the cards. Offer 3% cash back on selected category and let the customers choose which category they would like to activate. The majority of the new card users are students and targeting their own spending interest will be a good way to make them forming the habits of using credit cards.  
+**Cluster4: **inactive cardholders  
+Generalize a comprehensive credit card to target inactive cardholders. People don’t use credit card that often might prefer to use debit cards to prevent from spending too much money or have lots of credit cards to choose from. An all-sided credit card may quality their needs and attract them to use our credit card more often than the others. For example like no annual fee, free or low apr, and unlimited 2-3% cash back on all purchases. Customers in cluster 4 is difficult to perceive and offering all-sided strategy will be an appropriate way to target them.  
+**Cluster5: **installment users with high spending behavior  
+Generalize benefits like priority airport lounges, room upgrades, and special gifts for purchases focused credit cards but with a certain amount of APR required. We may target installment users with free APR for the first six months, and offering free balance transfer function to satisfy their needs. Customers in cluster 5 usually spend a lot but prefer to do installments, thus premium benefits with limited time of free APR will be exactly what they need when applying for credit cards.  
+
+
+
