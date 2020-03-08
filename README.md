@@ -1,5 +1,5 @@
 # Credit Card Customer Segmentation
-Machine Learning Study.  
+Machine Learning
 
 The dataset includes credit card usage behavior of customers with 17 behavioral features.    
 
